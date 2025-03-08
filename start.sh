@@ -37,6 +37,10 @@ else
     echo "Sampri model already exists"
 fi
 
-# Start the Streamlit application
-echo "Starting Streamlit application..."
-streamlit run DashboardBot.py --server.address=0.0.0.0
+# Show network interfaces for debugging
+echo "Network interfaces:"
+ip addr
+
+# Start the Streamlit application with explicit network binding
+echo "Starting Streamlit application with explicit binding..."
+streamlit run DashboardBot.py --server.address=0.0.0.0 --server.port=8501 --server.enableCORS=false --server.enableXsrfProtection=false
