@@ -5,23 +5,31 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/root/go/bin:${PATH}"
 
-# Install essential packages
-RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    git \
-    build-essential \
-    python3 \
-    python3-pip \
-    python3-venv \
-    && rm -rf /var/lib/apt/lists/*
+# Break up package installation into smaller groups to avoid log overflow
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl wget && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git build-essential && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 python3-pip python3-venv && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Go (required for Ollama)
 RUN curl -sL https://golang.org/dl/go1.21.0.linux-amd64.tar.gz | tar -C /usr/local -xz
 ENV PATH="/usr/local/go/bin:${PATH}"
 
-# Install Ollama
-RUN curl -fsSL https://ollama.com/install.sh | sh
+# Install Ollama using script but don't run it yet
+RUN mkdir -p /etc/ollama && \
+    curl -fsSL https://ollama.com/install.sh > /tmp/install.sh && \
+    chmod +x /tmp/install.sh && \
+    /tmp/install.sh
 
 # Set up Python environment
 WORKDIR /app
