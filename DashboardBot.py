@@ -3,6 +3,7 @@ import csv
 import os
 import time
 import datetime
+import re
 from ollama import Client
 import subprocess
 import pandas as pd
@@ -198,6 +199,16 @@ def get_ollama_client():
         return None
 
 client = get_ollama_client()
+
+def clean_ai_response(response):
+    """
+    Remove thinking tags and clean up the response
+    """
+    # Remove <think>...</think> blocks
+    cleaned = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL)
+    # Trim extra whitespace and newlines
+    cleaned = cleaned.strip()
+    return cleaned
 
 def save_to_csv(question, answer, filename=None):
     """
@@ -432,8 +443,9 @@ if model_ready:
                     )
                     end_time = time.time()
                     
-                    # Get response from model
-                    ai_response = response['message']['content']
+                    # Get response from model and clean it
+                    raw_response = response['message']['content']
+                    ai_response = clean_ai_response(raw_response)
                     
                     # Calculate response time
                     response_time = end_time - start_time
