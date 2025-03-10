@@ -3,6 +3,7 @@ import csv
 import os
 import time
 import datetime
+import re
 from ollama import Client
 import subprocess
 import pandas as pd
@@ -198,6 +199,16 @@ def get_ollama_client():
         return None
 
 client = get_ollama_client()
+
+def clean_ai_response(response):
+    """
+    Remove thinking tags and clean up the response
+    """
+    # Remove <think>...</think> blocks
+    cleaned = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL)
+    # Trim extra whitespace and newlines
+    cleaned = cleaned.strip()
+    return cleaned
 
 def save_to_csv(question, answer, filename=None):
     """
@@ -405,66 +416,65 @@ with col1:
 # Ensure model is available
 model_ready = client is not None and create_model()
 
+# Add some space before the input
+st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+
+# IMPORTANT: Place chat_input outside of any container, form, columns, etc.
+user_input = st.chat_input("Ketik pesan Anda di sini...")
+
 # Input area at the bottom
-if model_ready:
-    # Add some space before the input
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+if model_ready and user_input:
+    # Display user message
+    display_message("user", user_input)
     
-    # Use a container to position the input at the bottom
-    with st.container():
-        user_input = st.chat_input("Ketik pesan Anda di sini...")
-        
-        if user_input:
-            # Display user message
-            display_message("user", user_input)
+    # Add to history
+    timestamp = datetime.datetime.now().strftime('%H:%M:%S')
+    st.session_state.messages.append({"role": "user", "content": user_input, "timestamp": timestamp})
+    
+    # Process response with loading indicator
+    with st.spinner("Sampri sedang berpikir..."):
+        try:
+            start_time = time.time()
+            response = client.chat(
+                model='sampri', 
+                messages=[{'role': 'user', 'content': user_input}]
+            )
+            end_time = time.time()
+            
+            # Get response from model and clean it
+            raw_response = response['message']['content']
+            ai_response = clean_ai_response(raw_response)
+            
+            # Calculate response time
+            response_time = end_time - start_time
+            response_info = f"<small>Waktu respons: {response_time:.2f} detik</small>"
+            full_response = f"{ai_response}<br><br>{response_info}"
+            
+            # Display response
+            display_message("assistant", full_response)
             
             # Add to history
             timestamp = datetime.datetime.now().strftime('%H:%M:%S')
-            st.session_state.messages.append({"role": "user", "content": user_input, "timestamp": timestamp})
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": full_response,
+                "timestamp": timestamp
+            })
             
-            # Process response with loading indicator
-            with st.spinner("Sampri sedang berpikir..."):
-                try:
-                    start_time = time.time()
-                    response = client.chat(
-                        model='sampri', 
-                        messages=[{'role': 'user', 'content': user_input}]
-                    )
-                    end_time = time.time()
-                    
-                    # Get response from model
-                    ai_response = response['message']['content']
-                    
-                    # Calculate response time
-                    response_time = end_time - start_time
-                    response_info = f"<small>Waktu respons: {response_time:.2f} detik</small>"
-                    full_response = f"{ai_response}<br><br>{response_info}"
-                    
-                    # Display response
-                    display_message("assistant", full_response)
-                    
-                    # Add to history
-                    timestamp = datetime.datetime.now().strftime('%H:%M:%S')
-                    st.session_state.messages.append({
-                        "role": "assistant", 
-                        "content": full_response,
-                        "timestamp": timestamp
-                    })
-                    
-                    # Save interaction to CSV with error handling
-                    success, message = save_to_csv(user_input, ai_response)
-                    if not success:
-                        st.error(message)
-                    
-                except Exception as e:
-                    error_message = f"Terjadi kesalahan: {str(e)}<br>Pastikan server Ollama berjalan dan model Sampri sudah dimuat."
-                    display_message("assistant", error_message)
-                    st.session_state.messages.append({
-                        "role": "assistant", 
-                        "content": error_message,
-                        "timestamp": datetime.datetime.now().strftime('%H:%M:%S')
-                    })
-else:
+            # Save interaction to CSV with error handling
+            success, message = save_to_csv(user_input, ai_response)
+            if not success:
+                st.error(message)
+            
+        except Exception as e:
+            error_message = f"Terjadi kesalahan: {str(e)}<br>Pastikan server Ollama berjalan dan model Sampri sudah dimuat."
+            display_message("assistant", error_message)
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": error_message,
+                "timestamp": datetime.datetime.now().strftime('%H:%M:%S')
+            })
+elif not model_ready:
     st.error("Tidak dapat memuat model Sampri. Pastikan file modelfile tersedia dan Ollama server berjalan.")
 
 # Add footer
