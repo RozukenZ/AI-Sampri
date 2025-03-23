@@ -1,5 +1,7 @@
 FROM llama3.2
 
+ADAPTER training.txt
+
 PARAMETER temperature 0.7
 PARAMETER top_p 0.9
 PARAMETER stop "</answer>"

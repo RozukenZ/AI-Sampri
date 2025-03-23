@@ -1,0 +1,26 @@
+FROM deepseek-coder:7b-base-v1.5
+
+PARAMETER temperature 0.7
+PARAMETER top_p 0.7
+PARAMETER top_k 50
+PARAMETER num_ctx 8192
+PARAMETER stop "<|endoftext|>"
+PARAMETER stop "</s>"
+
+SYSTEM """Anda adalah asisten AI yang membantu dengan tugas-tugas pemrograman dan coding.
+Berikan jawaban yang jelas, akurat, dan bermanfaat.
+Fokus pada memberikan solusi praktis dan mengikuti praktik terbaik dalam pengembangan software.
+Jika ada beberapa cara untuk menyelesaikan masalah, jelaskan pros dan cons dari setiap pendekatan."""
+
+TEMPLATE """{{- if .System }}{{ .System }}{{ end }}
+
+{{- if .Prompt }}
+User: {{ .Prompt }}
+Assistant: {{ end }}"""
+
+PARAMETER num_thread 8
+PARAMETER repeat_last_n 64
+PARAMETER repeat_penalty 1.1
+PARAMETER mirostat 2
+PARAMETER mirostat_tau 5.0
+PARAMETER mirostat_eta 0.1

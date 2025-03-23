@@ -1,0 +1,23 @@
+FROM llama3.2
+
+# Gunakan TEMPLATE untuk format prompt/response
+TEMPLATE """
+{{ if .System }}{{ .System }}{{ end }}
+
+{{ if .Prompt }}
+### Question:
+{{ .Prompt }}
+
+### Answer:
+{{ end }}
+"""
+
+# Gunakan SYSTEM untuk instruksi sistem
+SYSTEM """You are a helpful assistant trained on specific data. Answer questions based on your training."""
+
+# Parameter model
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER num_ctx 4096
+PARAMETER num_predict 2048
+PARAMETER repeat_penalty 1.1
