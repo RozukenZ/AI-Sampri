@@ -1,0 +1,12 @@
+##23/3/2025##
+
+Update:
+
+- Fine Tunning Sampri
+- Cleaning Data Sampri
+
+How to use:
+- Pastikan sudah menginstall Ollama pada komputer
+- Pastikan juga semua versinya sama pada "requirement.txt" yang diperlukan hanya Ollamanya saja
+- Pastikan sudah menginstall llama3.2b pada Ollama
+- jalankan kode yang bernama "train_sampri.py"
